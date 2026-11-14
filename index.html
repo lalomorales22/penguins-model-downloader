@@ -196,7 +196,7 @@
             <option value="8">8 GB</option><option value="12">12 GB</option><option value="16">16 GB</option>
             <option value="24">24 GB</option><option value="32">32 GB</option><option value="48">48 GB</option>
             <option value="64">64 GB</option><option value="128">128 GB</option><option value="256">256 GB</option>
-            <option value="512">512 GB</option>
+            <option value="512">512 GB</option><option value="1024">1 TB</option><option value="2048">2 TB</option>
           </select>
         </div>
       </div>
@@ -292,7 +292,8 @@ function eta(s) {
 function hardware(gb) {
   const t = [[8, 'most graphics cards and any recent Mac'], [12, 'a 12 GB graphics card or a 16 GB Mac'], [16, 'a 16 GB graphics card or a 24 GB Mac'],
     [24, 'a 24 GB graphics card or a 32 GB Mac'], [32, 'a 32 GB graphics card or a 48 GB Mac'], [48, 'a 48 GB workstation card or a 64 GB Mac'],
-    [96, 'a 128 GB Mac or several graphics cards'], [190, 'a 256 GB Mac or a multi-card server'], [480, 'a 512 GB Mac or a big server']];
+    [96, 'a 128 GB Mac or several graphics cards'], [190, 'a 256 GB Mac or a multi-card server'], [480, 'a 512 GB Mac or a big server'],
+    [960, 'a server with 1 TB of memory'], [1920, 'a server with 2 TB of memory']];
   const hit = t.find(r => gb <= r[0]);
   return hit ? 'fits ' + hit[1] : 'needs a large server';
 }
