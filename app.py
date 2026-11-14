@@ -49,7 +49,7 @@ def cache_env(root):
     }
 
 
-from huggingface_hub import HfApi  # noqa: E402
+from huggingface_hub import HfApi, get_token  # noqa: E402
 
 api = HfApi()
 jobs = []
@@ -280,6 +280,20 @@ def repo_scan(repo):
     return info, files
 
 
+def gate_state(info):
+    """"" for an open model, otherwise "ok" (this account may download it),
+    "login" (nobody is logged in) or "locked" (terms not accepted yet)."""
+    if not info.gated:
+        return ""
+    if not get_token():
+        return "login"
+    try:
+        api.auth_check(info.id)
+        return "ok"
+    except Exception:
+        return "locked"
+
+
 def repo_details(repo):
     info, files = repo_scan(repo)
     names = {n.lower() for n, _ in files}
@@ -303,7 +317,7 @@ def repo_details(repo):
     return {
         "type": "repo",
         "repo": info.id,
-        "gated": bool(info.gated),
+        "gated": gate_state(info),
         "downloads": info.downloads or 0,
         "likes": info.likes or 0,
         "pipeline": info.pipeline_tag or "",

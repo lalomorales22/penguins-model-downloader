@@ -416,7 +416,9 @@ function drawRepo(animate) {
     `<div style="margin-top:8px">${esc(a.blurb)}</div>` +
     `<dl class="facts"><dt>Runs in</dt><dd>${esc(r.software)}</dd><dt>Computer</dt><dd>${esc(r.computer)}</dd><dt>Saved to</dt><dd class="mono">${fmt}/${esc(repo.repo)}</dd></dl>` +
     (r.warn ? `<div class="callout">${esc(r.warn)}</div>` : '') +
-    (repo.gated ? `<div class="callout">This model is locked. <a href="https://huggingface.co/${esc(repo.repo)}" target="_blank" rel="noopener">Accept its terms on Hugging Face</a> first, or the download will be refused.</div>` : '') +
+    (repo.gated === 'ok' ? `<div class="dim" style="margin-top:8px;font-size:13.5px">This model asks you to accept its terms. Your Hugging Face account already has access, so you are good to go.</div>` :
+     repo.gated === 'login' ? `<div class="callout">This model is locked. <a href="https://huggingface.co/${esc(repo.repo)}" target="_blank" rel="noopener">Accept its terms on Hugging Face</a>, then log this app in to your account (see "Locked models" in the README), or the download will be refused.</div>` :
+     repo.gated ? `<div class="callout">This model is locked. <a href="https://huggingface.co/${esc(repo.repo)}" target="_blank" rel="noopener">Accept its terms on Hugging Face</a> first, or the download will be refused. Then press Find again.</div>` : '') +
     `<div style="margin-top:8px;font-size:13.5px"><a href="https://huggingface.co/${esc(repo.repo)}" target="_blank" rel="noopener">Read the maker's own page</a></div></div>`;
   if (mains.length) {
     h += `<div class="section">${mains.length > 1 ? 'Pick one version' : 'The model'} <small>${mains.length > 1 ? 'They are the same model at different sizes. One is enough.' : ''}</small></div>`;
