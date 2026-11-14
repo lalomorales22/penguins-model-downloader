@@ -470,7 +470,17 @@ async function download() {
   } catch (err) { $('msg').textContent = err.message; say('I could not start that one. The note under the box says why.', 'sad'); }
 }
 
+let hiddenJobs = new Set((store.get('hiddenJobs') || '').split(',').filter(Boolean));
+function plainError(text) {
+  if (/Device not configured|Errno 6\b|No such file or directory|Input\/output error/.test(text)) return 'The drive was disconnected while this was downloading.';
+  if (/No space left/.test(text)) return 'The drive ran out of room.';
+  const lines = text.split('\n').filter(l => !/^\s*(File "|Traceback|[~^ ]+$)/.test(l));
+  return lines.slice(-2).join('\n') || text;
+}
 function drawJobs(jobs) {
+  // A stopped download disappears once the same model is downloading again, or when you remove it.
+  jobs = jobs.filter((j, i) => !hiddenJobs.has(j.id) &&
+    !((j.state === 'error' || j.state === 'cancelled') && jobs.slice(i + 1).some(n => n.dest === j.dest)));
   if (!jobs.length) { $('jobs').innerHTML = '<div class="empty">Nothing downloading.</div>'; return; }
   const word = {queued: 'Waiting its turn', running: 'Downloading', done: 'Done', error: 'Failed', cancelled: 'Cancelled'};
   $('jobs').innerHTML = jobs.slice().reverse().map(j => {
@@ -480,14 +490,16 @@ function drawJobs(jobs) {
     if (j.state === 'running' && j.done >= j.total) meta = 'Finishing up, writing to the drive…';
     else if (j.state === 'running' && j.speed > 0) meta += ` · ${size(j.speed)}/s · ${eta((j.total - j.done) / j.speed)}`;
     return `<div class="job"><div class="job-top"><div><span class="tag ${j.format}">${LABEL[j.format]}</span> <span class="mono">${esc(j.repo)}</span></div>` +
-      `<div style="display:flex;gap:8px">${live ? `<button class="small" data-cancel="${j.id}">Cancel</button>` : ''}<button class="small" data-open="${esc(j.dest)}">Show in Finder</button></div></div>` +
+      `<div style="display:flex;gap:8px">${live ? `<button class="small" data-cancel="${j.id}">Cancel</button>` : ''}<button class="small" data-open="${esc(j.dest)}">Show in Finder</button>${live ? '' : `<button class="small" data-hide="${j.id}" title="Take this off the list. The files stay where they are.">Remove</button>`}</div></div>` +
       `<div class="progress"><i style="width:${pct}%;${j.state === 'done' ? 'background:var(--good)' : j.state === 'error' ? 'background:var(--bad)' : ''}"></i></div>` +
-      `<div class="job-meta">${meta}</div>` + (j.error ? `<div class="err">${esc(j.error)}</div>` : '') +
+      `<div class="job-meta">${meta}</div>` + (j.error ? `<div class="err">${esc(plainError(j.error))}</div>` : '') +
       (j.state === 'cancelled' || j.state === 'error' ? '<div class="job-meta">Downloading the same files again picks up where this stopped.</div>' : '') + '</div>';
   }).join('');
 }
 document.addEventListener('click', async e => {
   const c = e.target.closest('[data-cancel]'), o = e.target.closest('[data-open]');
+  const h = e.target.closest('[data-hide]');
+  if (h) { hiddenJobs.add(h.dataset.hide); store.set('hiddenJobs', [...hiddenJobs].slice(-200).join(',')); poll(); return; }
   try {
     if (c) { await call('/api/cancel', {id: c.dataset.cancel}); poll(); }
     if (o) await call('/api/reveal', {path: o.dataset.open});
